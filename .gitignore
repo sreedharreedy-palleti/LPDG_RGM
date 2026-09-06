@@ -1,0 +1,40 @@
+# Python virtual environment
+.venv/
+env/
+venv/
+ENV/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Test & coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local IDE and editor configs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Pipeline generated outputs (Evaluator will generate their own)
+output/
+predictions_baseline.csv
+predictions.csv
+
+# Environment variables containing local secrets
+.env
+!.env.example
+
+# OS-specific files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Docker temporary export archives
+*.tar

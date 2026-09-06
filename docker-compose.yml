@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: lpdg-service
+    environment:
+      - DATA_DIR=/app/data
+      - OUTPUT_PATH=/app/output/predictions.csv
+      - LOG_LEVEL=INFO
+    volumes:
+      # Mount output folder to host machine so the evaluator gets the CSV directly
+      - ./output:/app/output

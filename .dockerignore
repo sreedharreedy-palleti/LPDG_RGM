@@ -1,0 +1,31 @@
+# Do not copy local virtual environments (the container creates its own)
+.venv
+venv
+env
+
+# Version control
+.git
+.gitignore
+
+# Cache and bytecode
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+
+# Output folder (the container mounts this from the host)
+output
+predictions.csv
+predictions_baseline.csv
+
+# Documentation & CI configs (not required inside runtime image)
+.github
+README.md
+
+# Editor settings
+.vscode
+.idea
+
+# Archive exports
+*.tar
