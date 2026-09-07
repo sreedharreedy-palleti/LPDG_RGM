@@ -2,12 +2,11 @@ import os
 import sys
 import logging
 import pathlib
-import datetime as dt
 import pandas as pd
 from baseline_3sigma import load, build_predictions
 from validate_submission import validate
 
-# Setup structured logging
+# 1. Structured logs worth reading
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -15,47 +14,51 @@ logging.basicConfig(
 )
 logger = logging.getLogger("lpdg-service")
 
-DATA_DIR = pathlib.Path(os.getenv("DATA_DIR", "./data"))
-OUTPUT_PATH = pathlib.Path(os.getenv("OUTPUT_PATH", "./predictions.csv"))
+# 2. Settings from environment (no laptop paths)
+DATA_DIR = pathlib.Path(os.getenv("DATA_DIR", "/app/data"))
+OUTPUT_PATH = pathlib.Path(os.getenv("OUTPUT_PATH", "/app/output/predictions.csv"))
 
 def run_healthcheck() -> int:
-    logger.info("Starting health check...")
-    # Verify critical paths and data accessibility
+    """Active health check: fails if telemetry directory or parquet files are unreadable."""
+    logger.info("Executing deep health check...")
     telemetry_dir = DATA_DIR / "telemetry"
     if not telemetry_dir.exists():
-        logger.error("Health check FAILED: Missing telemetry directory at %s", telemetry_dir)
+        logger.error("Health check failed: Missing telemetry folder at %s", telemetry_dir)
         return 1
 
     try:
-        # Check if parquet data can actually be read
-        test_df = pd.read_parquet(telemetry_dir)
-        if test_df.empty:
-            logger.error("Health check FAILED: Telemetry data is empty.")
+        sample = pd.read_parquet(telemetry_dir)
+        if sample.empty:
+            logger.error("Health check failed: Telemetry table is empty")
             return 1
-        logger.info("Health check PASSED: Found %d telemetry records.", len(test_df))
+        logger.info("Health check passed: Telemetry dataset is accessible (%d rows)", len(sample))
         return 0
-    except Exception as exc:
-        logger.error("Health check FAILED with error: %s", exc)
+    except Exception as err:
+        logger.error("Health check failed with error: %s", err)
         return 1
 
 def run_pipeline() -> int:
-    logger.info("Launching prediction pipeline...")
-    logger.info("Reading telemetry from %s", DATA_DIR)
+    logger.info("Pipeline started with DATA_DIR=%s and OUTPUT_PATH=%s", DATA_DIR, OUTPUT_PATH)
     
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    logger.info("Loading telemetry dataset...")
     frame = load(DATA_DIR)
+    
+    logger.info("Computing 3-sigma anomaly baselines...")
     predictions = build_predictions(frame)
     predictions.to_csv(OUTPUT_PATH, index=False)
-    logger.info("Predictions saved to %s", OUTPUT_PATH)
+    logger.info("Predictions written to %s (%d rows)", OUTPUT_PATH, len(predictions))
 
-    # Self-validation check
+    logger.info("Running submission validator...")
     problems = validate(OUTPUT_PATH)
     if problems:
-        logger.error("Submission failed validation with %d issues:", len(problems))
+        logger.error("Validation failed with %d problem(s):", len(problems))
         for p in problems:
             logger.error("  - %s", p)
         return 1
 
-    logger.info("Pipeline executed successfully and generated valid predictions!")
+    logger.info("Pipeline finished successfully with 0 validation errors.")
     return 0
 
 if __name__ == "__main__":

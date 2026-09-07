@@ -1,14 +1,14 @@
-import datetime as dt
+import pathlib
 import pandas as pd
-from validate_submission import REQUIRED_COLUMNS, validate
+from validate_submission import REQUIRED_COLUMNS, validate, normalise_gateway_id
 
-def test_predictions_schema(tmp_path):
-    # Tests that the output structure satisfies validation rules
-    sample_file = tmp_path / "dummy_preds.csv"
-    data = {col: [] for col in REQUIRED_COLUMNS}
-    pd.DataFrame(data).to_csv(sample_file, index=False)
-    
-    # Run validator logic
-    problems = validate(sample_file)
-    # File is empty of rows, so it should catch row count issues without crashing
+def test_gateway_id_normalisation():
+    assert normalise_gateway_id("001122334455") == "001122334455"
+    assert normalise_gateway_id("00:11:22:33:44:55") == "001122334455"
+    assert normalise_gateway_id("invalid-mac") is None
+
+def test_validate_detects_empty_csv(tmp_path: pathlib.Path):
+    dummy_csv = tmp_path / "test_empty.csv"
+    pd.DataFrame(columns=REQUIRED_COLUMNS).to_csv(dummy_csv, index=False)
+    problems = validate(dummy_csv)
     assert any("expected 120 rows" in p for p in problems)
