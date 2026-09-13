@@ -10,4 +10,5 @@ services:
       - LOG_LEVEL=INFO
     volumes:
       # Mount output folder to host machine so the evaluator gets the CSV directly
+      - ./data:/app/data:ro
       - ./output:/app/output
