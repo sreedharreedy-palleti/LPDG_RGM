@@ -38,3 +38,8 @@ Desktop.ini
 
 # Docker temporary export archives
 *.tar
+
+# Ignore temporary notes/draft file
+.github/work
+work
+**/work

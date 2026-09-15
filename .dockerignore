@@ -29,3 +29,7 @@ README.md
 
 # Archive exports
 *.tar
+
+.github
+work
+**/work
