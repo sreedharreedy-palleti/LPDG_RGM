@@ -1,6 +1,6 @@
 # LPDG Anomaly Detection Service
 
-Production service for detecting telemetry anomalies and ranking gateway site visits.
+Production service for detecting telemetry anomalies and ranking gateway site visits. It ingests hourly telemetry, prioritizes the 15 gateways most in need of inspection for each of the 8 scored weeks, and writes schema-compliant predictions.
 
 ---
 
@@ -15,9 +15,3 @@ Run the following command in the repository root:
 
 ```bash
 docker compose up --build
-
-## 2. Verifying It Is Working
-* **Container Health:** Run `docker inspect --format='{{json .State.Health}}' lpdg-service` to confirm status is `healthy`.
-* **Output Verification:** Check that `./output/predictions.csv` was created and run the grader check:
-  ```bash
-  python validate_submission.py output/predictions.csv
