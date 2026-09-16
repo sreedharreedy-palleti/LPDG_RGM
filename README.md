@@ -1,54 +1,80 @@
-What Is This Project Doing?
-LPDG runs a radio network of around 320 gateways that collect smart meter readings. When a gateway silently fails, meters stop reporting.  
+# LPDG Gateway Anomaly Detection Service
 
-A field technician visit costs €380.  
+Automated decision engine that prioritizes the top 15 gateway field visits per week over the 8 scored evaluation weeks (120 visits total) based on radio network telemetry.
 
-Leaving a broken gateway ignored costs €600 every week.  
+---
 
-The operations team can only dispatch 15 visits per week.  
+## 1. Project Background & Economics
 
-Your program acts as the automated brain: it looks at telemetry data (disconnections, reboots, offline seconds) and picks the exact 15 gateways that need a visit most, for each of the 8 target weeks (120 visits total).  
+* **Network Scale:** Around 320 radio gateways relaying meter telemetry across rooftop, basement, and plant room installations.
+* **Failure Impact:** A silent gateway failure stops all meters behind it from being read.
+* **Field Visit Cost:** Dispatching a technician costs **€380**.
+* **Neglect Cost:** Leaving an undetected broken gateway ignored costs **€600 every week**.
+* **Capacity Constraint:** The operations team has a strict capacity limit of **15 visits per week**.
 
-How Every File in Your Folder Works Together
-main.py (The Engine Driver): Starts the program. It checks if the data exists, runs the detection logic, creates the final predictions file, and tests the file to make sure it is valid.  
+---
 
-model.py (The Brain): Calculates which gateways are behaving abnormally compared to their normal 28-day baseline. It gives extra priority to repeated reboots and long offline times, ranking the top 15 each week.  
+## 2. Architecture & File Roles
 
-validate_submission.py (The Rule Checker): Checks that your output has exactly 120 rows, 5 correct columns, no missing scores, valid ranks 1 to 15, and clear reasons under 300 characters.  
+* **`main.py` (The Engine Driver):** Starts the application. Reads paths from environment variables, verifies data availability via health check probes, drives the scoring pipeline, writes the output CSV, and asserts zero validation errors.
+* **`model.py` (The Brain):** Calculates 28-day baseline distributions using Median Absolute Deviation (MAD) to detect 7-day deviations in `offline_duration_sec`, `disconnection_cnt`, and `reboot_cnt`. Applies metric weights and cascade penalties to rank the top 15 gateways per week with clear explanations under 300 characters.
+* **`validate_submission.py` (The Rule Checker):** Verifies that `predictions.csv` strictly contains 120 rows, 5 exact columns, numeric scores, no duplicate gateways per week, ranks 1 to 15, and valid gateway ID formats.
+* **`Dockerfile` & `docker-compose.yml` (The Box):** Packages the application into a minimal Python 3.11-slim container with automatic volume mounts, deep health checks, and unbuffered logging.
+* **`tests/test_pipeline.py` (The Unit Tests):** Tests edge-case normalization for MAC IDs, empty CSV files, and missing required columns.
+* **`DECISIONS.md` & `AI-USAGE.md` (The Explanations):** Details the 5 technical trade-offs made, model boundary limitations, and transparent disclosures regarding generative AI usage.
 
-Dockerfile & docker-compose.yml (The Box): Packages your code so anyone can run it on their computer with one command without installing Python or libraries manually.  
+---
 
-tests/test_pipeline.py (The Unit Tests): Verifies that gateway IDs are formatted properly and that invalid inputs get caught.  
+## 3. Evaluation & Execution Commands
 
-DECISIONS.md & AI-USAGE.md (The Explanations): Explain why you built the system this way, where it can fail, and how you used AI tools responsibly.  
+### Step 1: Run the Pipeline (One-Command Start)
 
-How the Evaluator Runs and Grades It
-Step 1: One Command to Run
+Run this command from the repository root:
 
-  
-
-The evaluator runs:
-
-Bash
+```bash
 docker compose up --build
 
+What it verifies:
 
-What they look for: The container must build without errors, find the data in ./data, run the calculations, and output ./output/predictions.csv.  
+The Docker container builds successfully[cite: 12].
 
-Step 2: Checking the Output File
+It finds and mounts the dataset from ./data.  
 
-The evaluator runs:
+It executes the anomaly engine and writes ./output/predictions.csv.  
+
+Step 2: Validate the Generated File
+Run the grader script against the output:
 
 Bash
 python validate_submission.py output/predictions.csv
 
+Expected terminal output:
 
-What they look for: It must print OK with zero errors. If this fails, the submission fails.  
+Plaintext
+output/predictions.csv: OK
+  15 ranked gateways for each of 8 weeks, 2026-02-02 to 2026-03-23
 
-Step 3: Checking Code Quality & Documentation
+Step 3: Run Local Unit Tests
+Run the test suite with pytest:
 
-They look at your git commits to see if you committed changes step-by-step.  
+Bash
+pytest tests/ -v
+Step 4: Verify Container Health Check
+Check the runtime health probe status:
 
-They read DECISIONS.md to see your technical choices.  
+Bash
+docker inspect --format='{{json .State.Health.Status}}' lpdg-service
+Expected output: "healthy".  
 
-They watch your 6–8 minute recording demonstrating the build and results.  
+Step 5: Check Container Logs
+Inspect application logs directly from the container:
+
+Bash
+docker logs lpdg-service
+
+4. Troubleshooting Checklist
+Missing Data Error: Ensure parquet telemetry exists on the host at ./data/telemetry/month=YYYY-MM/*.parquet.  
+
+Permission Denied on Output: Run mkdir -p output && chmod 777 output before starting the container.
+
+Cleaning Artifacts: Run docker compose down -v to reset container state.
