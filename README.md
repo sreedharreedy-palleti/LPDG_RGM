@@ -78,3 +78,7 @@ Missing Data Error: Ensure parquet telemetry exists on the host at ./data/teleme
 Permission Denied on Output: Run mkdir -p output && chmod 777 output before starting the container.
 
 Cleaning Artifacts: Run docker compose down -v to reset container state.
+
+## 6. Walkthrough Video Demonstration
+
+[Click here to watch the project video](C:\Users\CTI\Videos\Screen Recordings\sreedhar)
