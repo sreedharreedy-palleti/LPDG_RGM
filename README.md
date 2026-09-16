@@ -20,7 +20,7 @@ Automated decision engine that prioritizes the top 15 gateway field visits per w
 * **`model.py` (The Brain):** Calculates 28-day baseline distributions using Median Absolute Deviation (MAD) to detect 7-day deviations in `offline_duration_sec`, `disconnection_cnt`, and `reboot_cnt`. Applies metric weights and cascade penalties to rank the top 15 gateways per week with clear explanations under 300 characters.
 * **`validate_submission.py` (The Rule Checker):** Verifies that `predictions.csv` strictly contains 120 rows, 5 exact columns, numeric scores, no duplicate gateways per week, ranks 1 to 15, and valid gateway ID formats.
 * **`Dockerfile` & `docker-compose.yml` (The Box):** Packages the application into a minimal Python 3.11-slim container with automatic volume mounts, deep health checks, and unbuffered logging.
-* **`tests/test_pipeline.py` (The Unit Tests):** Tests edge-case normalization for MAC IDs, empty CSV files, and missing required columns.
+* **`tests/test_pipeline.py` (The Unit Tests):** Tests edge-case normalization for MAC IDs, empty CSV files, and missing required columns[cite: 1].
 * **`DECISIONS.md` & `AI-USAGE.md` (The Explanations):** Details the 5 technical trade-offs made, model boundary limitations, and transparent disclosures regarding generative AI usage.
 
 ---
@@ -33,27 +33,24 @@ Run this command from the repository root:
 
 ```bash
 docker compose up --build
-
 What it verifies:
 
-The Docker container builds successfully[cite: 12].
+The Docker container builds successfully.
 
-It finds and mounts the dataset from ./data.  
+It finds and mounts the dataset from ./data.
 
-It executes the anomaly engine and writes ./output/predictions.csv.  
+It executes the anomaly engine and writes ./output/predictions.csv.
 
 Step 2: Validate the Generated File
 Run the grader script against the output:
 
 Bash
 python validate_submission.py output/predictions.csv
-
 Expected terminal output:
 
 Plaintext
 output/predictions.csv: OK
   15 ranked gateways for each of 8 weeks, 2026-02-02 to 2026-03-23
-
 Step 3: Run Local Unit Tests
 Run the test suite with pytest:
 
@@ -64,20 +61,27 @@ Check the runtime health probe status:
 
 Bash
 docker inspect --format='{{json .State.Health.Status}}' lpdg-service
-Expected output: "healthy".  
+Expected output: "healthy".
 
 Step 5: Check Container Logs
 Inspect application logs directly from the container:
 
 Bash
 docker logs lpdg-service
-
 4. Troubleshooting Checklist
-Missing Data Error: Ensure parquet telemetry exists on the host at ./data/telemetry/month=YYYY-MM/*.parquet.  
+Missing Data Error
+Ensure parquet telemetry exists on the host at ./data/telemetry/month=YYYY-MM/*.parquet.
 
-Permission Denied on Output: Run mkdir -p output && chmod 777 output before starting the container.
+Fix Permission Denied on Output
+Grant write access to the host output directory before running:
 
-Cleaning Artifacts: Run docker compose down -v to reset container state.
+Bash
+mkdir -p output && chmod 777 output
+Clean Container Artifacts
+Reset the container state:
+
+Bash
+docker compose down -v
 
 ## 6. Walkthrough Video Demonstration
 
