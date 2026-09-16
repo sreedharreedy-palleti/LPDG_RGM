@@ -81,4 +81,6 @@ Cleaning Artifacts: Run docker compose down -v to reset container state.
 
 ## 6. Walkthrough Video Demonstration
 
-[Click here to watch the project video](C:\Users\CTI\Videos\Screen Recordings\sreedhar)
+WWatch the complete 6–8 minute walkthrough demonstration:
+
+👉 [Watch the Project Video Walkthrough](https://drive.google.com/drive/folders/1yWfunTacTGaAWMKt0S70mPlj0ghZn5aj)
