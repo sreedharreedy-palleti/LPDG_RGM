@@ -21,7 +21,6 @@ def compute_mad(series: pd.Series) -> float:
     """Compute Median Absolute Deviation (MAD) for robust outlier scaling."""
     med = series.median()
     mad = (series - med).abs().median()
-    # 1.4826 normalizes MAD to estimate standard deviation for normal distribution
     return float(1.4826 * mad) if mad > 0 else float(series.std(ddof=0) or 1.0)
 
 
@@ -67,8 +66,8 @@ def rank_week_enhanced(frame: pd.DataFrame, monday: dt.date) -> pd.DataFrame:
 
         # Compound penalty: frequent reboots while suffering disconnections
         compound_penalty = float(
-            (recent_gw["reboot_cnt"] > 0) & (recent_gw["disconnection_cnt"] > 2)
-        ).sum() * 5.0
+            ((recent_gw["reboot_cnt"] > 0) & (recent_gw["disconnection_cnt"] > 2)).sum()
+        ) * 5.0
         total_gw_score += compound_penalty
 
         if compound_penalty > 0:
